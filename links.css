@@ -1,0 +1,14 @@
+.links1 {
+    position: relative;
+    left: 50px;
+    width: 400px;
+    border: 3px solid #0b4ac0;
+    padding: 8px;
+}
+.links2 {
+    position: absolute;
+    top: 400px;
+    left: 500px;
+    width: 400px;
+    border: 3px solid #0c8334;
+}
