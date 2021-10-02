@@ -1,0 +1,9 @@
+.navbuttons a {
+    font-family: Arial;
+    font-size: "16";
+	background-color: lightslategrey;
+	color: white;
+    text-align: center;
+    text-decoration: none;
+    padding: 1px;
+}
