@@ -4,6 +4,7 @@
     width: 400px;
     border: 3px solid #0b4ac0;
     padding: 8px;
+    background-color: darkcyan;
 }
 .links2 {
     position: absolute;
@@ -11,4 +12,5 @@
     left: 500px;
     width: 400px;
     border: 3px solid #0c8334;
+    background-color: darkgreen;
 }
