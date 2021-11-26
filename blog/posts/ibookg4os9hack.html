@@ -1,0 +1,65 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="../../default.css">
+        <link rel="stylesheet" type="text/css" href="../../default.css">
+        <title>iBook G4 running Mac OS 9 (Unofficially)</title>
+		<meta name="title" content="iRaven - Blog Post">
+		<meta name="description" content="iBook G4 running Mac OS 9 (Unofficially)">
+    </head>
+    <body>
+        <img src=../../siteimg/deioxpk-32.png></img>
+        <img src=../../siteimg/notepad.png></img>
+            <h1>iBook G4 running Mac OS 9 (Unofficially)</h1>
+            <hr>
+            <!--text-->
+                So, decided to start off this public random blog with this, neat.
+                Crossing my fingers if this formats correctly too. If it doesn't, fuck shit in a dick. (Spoiler alert, it didn't. :())
+                <br><br>
+                I was contacted by a viewer of a video on my channel (about running Mac OS 9 on my iBook), as they wanted to do the same.
+                <br><br>
+                Heeeere comes the context though- the video on my channel was published in 2019- <em>The video was recorded in November 2017. Halp.</em>
+                <br><br>
+                Obviously having no clue on how to do this off the top of my head, and there being no official guide (as results on different systems are mixed), I had to go through older bookmarks I saved in 2017.
+                <br><br>
+                This whole ordeal is trial-error, there isn't any official guides for a reason. My research involved a lot of commands/tinkering on forum posts on respective forums MacOS9Lives!, ThinkClassic, and 68kmla.
+                <br><br>
+                With no modifications, inserting an OS9 install CD (Unsupported G4s version is preferred- find it on MacOS9Lives.) into the machine results in it appearing in Startup Manager, however upon booting to no avail - a grey screen. This is the normal behavior as iBooks in this era shipped with some OSX version (and was far into OSX at the time).
+                <br><br>
+                This is due to it detecting the computer information - model identifier, processor type, version, etc. and Mac OS 9 was last developed in 2002- when iBook G4s were produced in 2004. It's incompatible on a hardware level- because of how OS9 is, not the actual hardware itself.
+                <br><br>
+                (The G4 chip is leaps and bounds capable of running OS9.)
+                <br><br>
+                Open Firmware is your friend in this case and is extensively used. The only required thing to get OS9 to detect a valid system to boot on is to 'derp it' and make it identify falsely equipped with an older PPC G4/chip.
+                <br><br>
+                Open Open Firmware (lol) with the key combo Alt, Command, O, and F on startup immediately after the <a href="https://www.youtube.com/watch?v=IyvOz0HK9ss">bong.</a>
+                <br><br>
+                It should go to a command/terminal interface. My iBook is identified as PowerBook6,5- yours may be different and the following may not apply to you. If you happen to have the same model, <em>eyy 6,5 gang. XD</em>
+                <br><br>
+                We're now going to enter nvedit mode- a mode for entering a script of OF commands to be eventually saved in your computer's NVRAM. (If your computer has a dead CMOS battery- replace it, else you're going to have to do the following every. single. time. For the iBooks this doesn't apply.)
+                <br><br>
+                Simply type nvedit to enter this mode. Your cursor should jump below the field you just typed on.
+                Type these commands exactly how they appear on screen:
+                <br><br>
+                " /cpus/@0" find-package if drop " /cpus/@0" find-device 80010201 encode-int " cpu-version" property then
+                <br><br>
+                " /cpus/@1" find-package if drop " /cpus/@1" find-device 80010201 encode-int " cpu-version" property then
+                <br><br>
+                You won't be able to see anything you're typing, have a decent keyboard with you. Or just be careful.
+                <br><br>
+                After these commands are entered, press Ctrl + C to exit nvedit mode, then type nvstore to save the above commands in NVRAM.
+                <br><br>
+                After that, you need to enable a setting so the script runs on each startup. Type: setenv use-nvramrc? 1
+                to enable it.
+                <br><br>
+                After that, you should be good to go- make sure your computer has a stable power source and then type reset-all to immediately reboot.
+                <br><br>
+                Do whatever method you did before to start up to the OS9 CD. Make sure it's the special patched "Unsupported G4s" version from MacOS9Lives- Normal installation discs won't work without other OF commands.
+                <br><br>
+                If happy mac goto success. You should be able to install OS9- with a catch.
+                <br><br>
+                <em>Suggestion: The image file it installs on there using ASR (Apple Software Repair/Update) may not work when you boot from the HD- in my experience, copying the contents of the CD to the HD is preferred, and then manually sifting through extensions and control panels (in case any rogue ones get in the way).</em>
+
+            <br><br>
+
+    </body>
+</html>
