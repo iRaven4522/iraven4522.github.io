@@ -1,0 +1,19 @@
+.leftsq {
+    position: relative;
+    left: -220px;
+    
+    width: 400px;
+    border: 3px solid aquamarine;
+    padding: 8px;
+    background-color: darkblue;
+}
+.rightsq {
+    position: relative;
+    top:-511px;
+    left: 220px;
+    width: 400px;
+    border: 3px solid darkblue;
+    padding: 8px;
+    color:darkgray;
+    background-color: aquamarine;
+}
