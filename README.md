@@ -1,6 +1,5 @@
 # iraven4522.github.io
 iRaven GitHub site
 
-Public-facing site for testing. 
+Personal public-facing website, hosted on https://iravenhome.net. 
 
-Not much is here yet (as of creation), however the rest of my existing other site will be merged one of these days when I get off my ass.
