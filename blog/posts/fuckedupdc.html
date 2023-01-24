@@ -1,0 +1,92 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="../../default.css">
+        <link rel="stylesheet" type="text/css" href="../../buttons.css">
+        <title>iR Blog (01/23/23): that moment when you fuck up a critial domain controller because you can't read</title>
+		<meta name="title" content="iRaven - Blog Post">
+		<meta name="description" content="that moment when you fuck up a critial domain controller because you can't read">
+    </head>
+    <body>
+        <img src=../../siteimg/deioxpk-32.png></img>
+        <img src=../../siteimg/notepad.png></img>
+            <h1>that moment when you fuck up a critial domain controller because you can't read</h1>
+            <h2>01/23/23</h2>
+            <hr>
+            <!--text-->
+            <p style="background-color: black; opacity:0.9;">
+                Soooo uh, holy crap i haven't updated this blog in quite a long time. blame life stuffs, depression, and more depression. all the depression! :D<br>
+            i've just got a new server that i'm fixing to migrate to, replacing my current (as of now) PowerEdge T310.<br>
+            this requires me to to do a Proxmox migration (not just putting in my existing Proxmox install drive in the new server).<br>
+            this last weekend (as of right now it's tuesday) i was planning to do this migration, with one thing i had to do left... clone a VM.<br>
+            <br>
+            back when i set up my current poweredge's proxmox install in Jan. 2022, before then it used to be a normal Windows Server 2008 R2 machine, running everything on there.<br>
+            in hindsight, it was kinda dumb, as that install runs a domain controller, however obviously proxmox had many many advantages with many VMs you can run, with many recommendations from friends.<br>
+            i didn't want to lose that install as it had lots of stuff running that i wanted to keep running (and later migrated to other server VMs, as it's a DC, but was running lots of other services), so the easiest way to set it up in proxmox was to bridge the physical drive of that install to a VM.<br>
+            it worked, and had no problems doing so, other than the fact it was a weird setup compared to all the other VMs that had virtual disk images on a dedicated VM HDD.<br>
+            <br>
+            soooo i decided, let's just move this DC VM to a virtual disk image just like the rest- as i've been meaning to since i set it up with the physical drive.<br>
+            i decided to use clonezilla, obviously as it's a fairly straightforward (at least if used in the basic mode... hindsight lol) way to clone a disk/partitions to a target disk. i've used it before on other systems and it's worked fairly well.<br>
+            however in this case, i realize it can't move a bigger disk's (the physical drive) contents to a smaller one (the virtual disk). not too surprised.<br>
+            <br><img src="../img/czillasdb.png" width="600" title="an image of a clonezilla command prompt, giving warnings such as 'do you want to delete all contents?', asking many times"><br>
+            i then search some stuff online, coming across a guide on using clonezilla with a specific argument to clone a partition to a smaller one. obviously, i took note of how much space the OS partition had used up, and sized the virtual disk accordingly.<br>
+            i then do proceed with that.. and while it's prompting me to select the target partition to restore to, i notice it doesn't show an 'sdb' option, which is the virtual disk (compared to the physical drive being /dev/sda.)<br>
+            i get a bit confused but go with the option it shows to target restore to: /dev/sda2, which is the Windows OS partition (where the source partition i picked was System Reserved, for boot files. i figured i'd do this one first.)<br>
+            i then realize while it gives me the prompts that that is the OS partition, and don't think twice, tell it to quick format it. this... broke it. a lot.<br>
+            <img src="../img/0xcferror.png" width="600"><br>
+            when i reboot and try to boot from the physical drive, i get this error. it's at this moment i knew i fucked up *hard*.<br>
+            <br>
+            i immediately mount a Hiren's Boot CD PE iso and start investigating what damage clonezilla (and my dumbassery) did to it.<br>
+            i notice there is *two* System Reserved partitions, one being the actual one, and the other one being what clonezilla copied to my physical drive's other OS partition.<br>
+            oddly enough both partitions were the same size (100 MB) while the fucked up one was also 232GB. *wat*<br>
+            so i then check if the data is still there (obviously), as that's the most important part. thanks to the Hiren PE iso, it has a copy of GetDataBack NTFS, which is the only program i discovered that could help me out with this.<br>
+            <em>(disclaimer: i also have a full working backup of that install from dec, which in hindsight was used, however just using it with no modifications would completely break my AD as i have a second domain controller (replicating from this one, yay Cadance!))</em><br>
+            after that program scans the entire disk, i can see the file contents that were "deleted" but are still there thanks to forensics and MFT things. i then copy all of it to the virtual disk's "OS" partition which takes forever.<br>
+            <br><img src="../img/filecopy.jpg" width="600"><br>
+            i then kinda figured it was that simple, as after i copied, i checked the boot files to see if they existed, and did the textbook <code>bootrec /fixmbr /fixboot</code> whatever.<br>
+            <br><img src="../img/0xcferror.png" width="600"><br>
+            that... wasn't enough to kickstart it. something else was fucky. XC<br>
+            <br>
+            i then investigated the BCD (estencially, bootloader) a little bit more, which got messed up in the process of copying to the virtual drive.<br>
+            unsurprisingly, i saw it contained boot entries for two windows installs, one on the virtual and another on the physical drives. the thing was- the physical drive did not contain a valid OS partition readable by anything (other than forensic tools) anymore. <em>huh.</em><br>
+            <br>
+            i then figured out how to rebuild the bcd completely, using <code>bootrec /rebuildbcd</code>, however that didn't work as it didn't recognize my virtual disk's windows install as valid. i then figured out why- GetDataBack only copied file data and attributes, and *no* security permissions.<br>
+            this is a fucking disaster for windows in the first place as security/ACLs are very important, soooooooo i knew a direct restore from the physical drive's forensics wasn't going to work. to no surprise, no dism commands worked either (in fact, dism gave me errors i couldn't find anything specifically on the web about.<br>
+            i was stumped, so i slept on it.<br>
+            <br><img src="../img/dismnoimage.png" width="600"><br>
+            i then tried to tweak the bootloader a little more, until the infamous command to create all boot files <code>bcdboot c:\windows /s s: /v</code> ran successfully. i don't know exactly what i did, but it suddenly did that, so i rebooted.<br>
+            <br><img src="../img/wdfldrsyserror.jpg" width="600"><br>
+            i get this error complaining it can't load WDFLDR.sys, which i've never seen before. interestingly enough, when i search for this file in the virtual disk OS partition, it's clearly there.<br>
+            i didn't know if it's corrupted or not, but assumed it was (especially with how GDB didn't restore security permissions.)<br>
+            <br>
+            i then realize, wait- i can probably restore the known working backup i have of this install, then copy the latest modified files data and attributes via robocopy on another temporary virtual disk with GDB's restored files.<br>
+            <br><img src="../img/workingbackuprestore.png" width="600"><br>
+            and so i did that. restoring it from the working backup took forever, but i had a feeling this may or may not work.<br>
+            <br><img src="../img/pagefilecp.png" width="600"><br>
+            i then used robocopy to copy all the files i could find that are modified, such as logs, AD database (most most important), DNS, certificate authority, user profiles, etc.<br>
+            and then rebuilt the bootloader again, this time with <code>bootrec /rebuildbcd</code> actually recognizing the virtual OS partition and applying necessary changes. looking like we're on the right track.<br>
+            i very anxiously restart out of Hiren to the bootloader. i'm then greeted with this:<br>
+            <br><img src="../img/srv2008boot.png" width="600"><br>
+            holy fucking *shit* it's actually doing something. (keep in mind, i turned on verbose boot for a reason, so this is normal to see for now.)<br>
+            i then see a cursor, then i didn't realize it randomly rebooted. to no surprise, it crashes and goes in a boot loop. i then get a screenshot of the STOP error:<br>
+            <br><img src="../img/adbsod.png" width="600"><br>
+            for ADDS that is an incredibly weird error to see. it's like required files don't exist. (hindsight!)<br>
+            i then remember DSRM (directory services restore mode) is a thing, which i can use as an alternate safe mode without it bringing online NT domain services (for repair/restore use).<br>
+            so, i go back with a Server 2008 R2 ISO and use cmd to set it like so: <code>bcdedit /store e:\boot\bcd /set {default} safeboot dsrepair</code><br>
+            what do you know, i see a cursor, expecting it to BSOD... then i see this:<br>
+            <br><img src="../img/tngsvrdsrmlogon.png" width="600"><br>
+            <b>o m g</b> it's booted successfully for the first time since a few days ago when i nuked it c: then i continued to see what the issue was with ADDS.<br>
+            i then log on, and i notice explorer or anything doesn't come up like safe mode usually does. it definitely felt weird, so i checked task manager, with no signs of it. then i checked cmd.<br>
+            <br><img src="../img/svrbootloader.png" width="600"><br>
+            why in the <em>fuck</em> are you D:? i thought windows mounted its OS partition as C:??<br>
+            i then research that and find many ways to fix it, including rebuilding the BCD (yet again), or remounting/reattaching drives, both of which i did to no avail at all.<br>
+            i also found a <a href="https://learn.microsoft.com/en-us/troubleshoot/windows-server/backup-and-storage/restore-system-boot-drive-letter" target="_blank">registry tweak</a> published by microsoft, showing how to change the system boot drive letter.<br>
+            so i do this very cautiously knowing it may break things even more or not. i anxiously restart to apply the changes.<br>
+            whatddya know: i see a normal windows boot screen, followed by a normal windows logon screen.<br>
+            <b>i did it.</b><br>
+            i then try logging on with my domain admin account, and it works without any issue.<br>
+            <br><br>
+            TECHNOLOGSVR is finally restored and i definitely learned a lot while trying to restore it and failing. definitely making *waaaaaaaaaaaay* more often backups from now on, especially as it's my primary domain controller. c:<br>
+            (and i also need to upgrade it or replace it at some point because it still runs 2008 R2 halp)<br>
+            </p>
+    </body>
+</html>
