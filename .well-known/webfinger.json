@@ -1,0 +1,9 @@
+{
+  "subject": "acct:tailscale@iraven.net",
+  "links": [
+    {
+      "rel": "http://openid.net/specs/connect/1.0/issuer",
+      "href": "https://sso.iraven.net/application/o/tailscale/.well-known/openid-configuration"
+    }
+  ]
+}
